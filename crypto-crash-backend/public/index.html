@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto Crash Game</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Crypto Crash Game</h1>
+
+  <form id="betForm">
+    <input type="text" id="playerId" placeholder="Player ID" required />
+    <input type="number" id="usdAmount" placeholder="USD Amount" required />
+    <select id="currency">
+      <option value="BTC">BTC</option>
+      <option value="ETH">ETH</option>
+    </select>
+    <button type="submit">Place Bet</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="multiplier">Multiplier: 1.00x</div>
+
+  <script>
+    const socket = io('http://localhost:5000');
+
+    socket.on('roundStart', (data) => {
+      document.getElementById('status').textContent = `New Round Started. Crash Point: ${data.crashPoint}`;
+    });
+
+    socket.on('multiplierUpdate', (data) => {
+      document.getElementById('multiplier').textContent = `Multiplier: ${data.multiplier}x`;
+    });
+
+    socket.on('roundEnd', (data) => {
+      document.getElementById('status').textContent = `💥 Game Crashed at ${data.crashPoint}x!`;
+    });
+
+    document.getElementById('betForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const playerId = document.getElementById('playerId').value;
+      const usdAmount = parseFloat(document.getElementById('usdAmount').value);
+      const currency = document.getElementById('currency').value;
+
+      const res = await fetch('http://localhost:5000/api/bet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId, usdAmount, currency })
+      });
+
+      const data = await res.json();
+      alert(data.msg || JSON.stringify(data));
+    });
+  </script>
+</body>
+</html>
